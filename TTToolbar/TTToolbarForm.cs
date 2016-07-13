@@ -25,7 +25,6 @@ namespace TTToolbar
       public string name;
       public string link;
       public PictureBox icon;
-      public Label label;
     }
 
     //-------------------------------------------------------------------------
@@ -41,6 +40,8 @@ namespace TTToolbar
       // Set starting position to setting stored in registry (if it exists).
       this.StartPosition = FormStartPosition.Manual;
       this.Location = this.GetStoredPosition();
+
+      this.TransparencyKey = this.BackColor;
     }
 
     //-------------------------------------------------------------------------
@@ -70,12 +71,10 @@ namespace TTToolbar
       Shortcut shortcutInfo = new Shortcut();
       shortcutInfo.name = shortcut.GetAttribute("name");
 
-      // Create new icon and label.
+      // Create new icon.
       PictureBox icon = CreateNewIcon(shortcut.GetAttribute("iconFilename"), shortcutInfo.name);
-      Label label = CreateNewLabel(shortcutInfo.name);
 
       shortcutInfo.icon = icon;
-      shortcutInfo.label = label;
 
       // Get exe or link to run.
       shortcutInfo.link = "N/A";
@@ -189,46 +188,15 @@ namespace TTToolbar
 
     //-------------------------------------------------------------------------
 
-    private Label CreateNewLabel(string name)
-    {
-      Label label = new Label();
-      label.Text = name;
-      label.AutoSize = false;
-      label.TextAlign = ContentAlignment.MiddleCenter;
-
-      return label;
-    }
-
-    //-------------------------------------------------------------------------
-
     private void PlaceShortcutsOnForm()
     {
       foreach (Shortcut shortcut in this.shortcuts)
       {
-        AddIcon(shortcut.icon);
-        AddLabel(shortcut.label);
+        this.shortcutIcons.ColumnCount = shortcutIcons.ColumnCount + 1;
+        this.shortcutIcons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+        this.shortcutIcons.Size = new Size(this.shortcutIcons.Size.Width + 80, this.shortcutIcons.Size.Height);
+        this.shortcutIcons.Controls.Add(shortcut.icon);
       }
-    }
-
-    //-------------------------------------------------------------------------
-
-    private void AddIcon(PictureBox icon)
-    {
-      this.shortcutIcons.ColumnCount = shortcutIcons.ColumnCount + 1;
-      this.shortcutIcons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-      this.shortcutIcons.Size = new Size(this.shortcutIcons.Size.Width + 80, this.shortcutIcons.Size.Height);
-      this.shortcutIcons.Controls.Add(icon);
-    }
-
-    //-------------------------------------------------------------------------
-
-    private void AddLabel(Label label)
-    {
-      this.shortcutLabels.ColumnCount = shortcutLabels.ColumnCount + 1;
-      this.shortcutLabels.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-      this.shortcutLabels.Size = new Size(this.shortcutLabels.Size.Width + 80, this.shortcutLabels.Size.Height);
-
-      this.shortcutLabels.Controls.Add(label);
     }
 
     //-------------------------------------------------------------------------
@@ -260,6 +228,7 @@ namespace TTToolbar
     {
       PictureBox pictureBox = (PictureBox)sender;
       pictureBox.BackColor = Color.LightGray;
+      this.Text = pictureBox.Name;
     }
 
     //-------------------------------------------------------------------------
@@ -268,6 +237,7 @@ namespace TTToolbar
     {
       PictureBox pictureBox = (PictureBox)sender;
       pictureBox.BackColor = Color.Transparent;
+      this.Text = "TT Toolbar";
     }
 
     //-------------------------------------------------------------------------
@@ -314,7 +284,10 @@ namespace TTToolbar
           InsertShortcutAtIndex(shortcutToInsert, indexToInsertAt);
           UpdateIndexing(indexOfShortcutToInsert, indexToInsertAt);
 
-          ClearShortcuts();
+          // Clear shortcuts.
+          this.shortcutIcons.Controls.Clear();
+          this.shortcutIcons.ColumnCount = 1;
+
           PlaceShortcutsOnForm();
         }
         else
@@ -322,17 +295,6 @@ namespace TTToolbar
           RunShortcut(pictureBox);
         }
       }
-    }
-
-    //-------------------------------------------------------------------------
-
-    private void ClearShortcuts()
-    {
-      this.shortcutIcons.Controls.Clear();
-      this.shortcutLabels.Controls.Clear();
-
-      this.shortcutIcons.ColumnCount = 1;
-      this.shortcutLabels.ColumnCount = 1;
     }
 
     //-------------------------------------------------------------------------

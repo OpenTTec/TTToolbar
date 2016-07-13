@@ -36,7 +36,6 @@
       this.restoreToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.closeApplicationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.shortcutIcons = new System.Windows.Forms.TableLayoutPanel();
-      this.shortcutLabels = new System.Windows.Forms.TableLayoutPanel();
       this.trayMenu.SuspendLayout();
       this.SuspendLayout();
       // 
@@ -81,23 +80,11 @@
       this.shortcutIcons.Size = new System.Drawing.Size(65, 53);
       this.shortcutIcons.TabIndex = 1;
       // 
-      // shortcutLabels
-      // 
-      this.shortcutLabels.ColumnCount = 1;
-      this.shortcutLabels.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
-      this.shortcutLabels.Location = new System.Drawing.Point(12, 71);
-      this.shortcutLabels.Name = "shortcutLabels";
-      this.shortcutLabels.RowCount = 1;
-      this.shortcutLabels.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 16F));
-      this.shortcutLabels.Size = new System.Drawing.Size(65, 16);
-      this.shortcutLabels.TabIndex = 2;
-      // 
       // TTToolbarMainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(594, 99);
-      this.Controls.Add(this.shortcutLabels);
+      this.ClientSize = new System.Drawing.Size(594, 74);
       this.Controls.Add(this.shortcutIcons);
       this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -118,7 +105,6 @@
     private System.Windows.Forms.ToolStripMenuItem restoreToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem closeApplicationToolStripMenuItem;
     private System.Windows.Forms.TableLayoutPanel shortcutIcons;
-    private System.Windows.Forms.TableLayoutPanel shortcutLabels;
   }
 }
 
