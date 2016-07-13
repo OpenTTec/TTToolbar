@@ -101,9 +101,11 @@
       this.Controls.Add(this.shortcutIcons);
       this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+      this.MaximizeBox = false;
       this.Name = "TTToolbarMainForm";
       this.ShowInTaskbar = false;
       this.Text = "TT Toolbar";
+      this.TopMost = true;
       this.trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
