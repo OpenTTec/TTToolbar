@@ -76,23 +76,24 @@
       this.shortcutIcons.Location = new System.Drawing.Point(12, 12);
       this.shortcutIcons.Name = "shortcutIcons";
       this.shortcutIcons.RowCount = 1;
-      this.shortcutIcons.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 53F));
-      this.shortcutIcons.Size = new System.Drawing.Size(65, 53);
+      this.shortcutIcons.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+      this.shortcutIcons.Size = new System.Drawing.Size(60, 60);
       this.shortcutIcons.TabIndex = 1;
       // 
       // TTToolbarMainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(594, 74);
+      this.ClientSize = new System.Drawing.Size(444, 74);
       this.Controls.Add(this.shortcutIcons);
-      this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
       this.MaximizeBox = false;
       this.Name = "TTToolbarMainForm";
       this.ShowInTaskbar = false;
       this.Text = "TT Toolbar";
       this.TopMost = true;
+      this.ResizeEnd += new System.EventHandler(this.Form_ResizeEnd);
+      this.Resize += new System.EventHandler(this.Form_Resize);
       this.trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 

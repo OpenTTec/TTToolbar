@@ -16,6 +16,10 @@ namespace TTToolbar
     List<Shortcut> shortcuts = new List<Shortcut>();
     PictureBox iconBeingDragged = null;
     string shortcutIndexing = "N/A";
+    int maxIconSize = 60;
+    int minIconSize = 40;
+    int currentIconSize = 60;
+    Size defaultSize = new Size(460, 113);
 
     //-------------------------------------------------------------------------
 
@@ -24,7 +28,10 @@ namespace TTToolbar
       public string exeRelFilename;
       public string name;
       public string link;
+      public Image originalImage;
       public PictureBox icon;
+      public int iconSourceWidth;
+      public int iconSourceHeight;
     }
 
     //-------------------------------------------------------------------------
@@ -35,13 +42,18 @@ namespace TTToolbar
 
       PopulateListOfShortcutsFromConfigXml();
       ArrangeShortcutsFromRegistrySetting();
+
+      ApplyRegistrySettings();
+
+      ScaleImageIcon(GetScaledPercentage());
       PlaceShortcutsOnForm();
 
-      // Set starting position to setting stored in registry (if it exists).
-      this.StartPosition = FormStartPosition.Manual;
-      this.Location = this.GetStoredPosition();
-
       this.TransparencyKey = this.BackColor;
+
+      // Write to registry so app launches on startup (WIP).
+      //string exeFullPath = Environment.CurrentDirectory.ToString() + "\\" + "TTToolbar.exe";
+      //RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+      //key.SetValue("TTToolbar", exeFullPath);
     }
 
     //-------------------------------------------------------------------------
@@ -73,8 +85,10 @@ namespace TTToolbar
 
       // Create new icon.
       PictureBox icon = CreateNewIcon(shortcut.GetAttribute("iconFilename"), shortcutInfo.name);
-
+      shortcutInfo.originalImage = icon.Image;
       shortcutInfo.icon = icon;
+      shortcutInfo.iconSourceHeight = shortcutInfo.originalImage.Height;
+      shortcutInfo.iconSourceWidth = shortcutInfo.originalImage.Width;
 
       // Get exe or link to run.
       shortcutInfo.link = "N/A";
@@ -151,6 +165,28 @@ namespace TTToolbar
 
     //-------------------------------------------------------------------------
 
+    private void ApplyRegistrySettings()
+    {
+      RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\TTToolbar");
+
+      if (key != null)
+      {
+        if (key.GetValue("iconSize") != null)
+        {
+          this.currentIconSize = Convert.ToInt32(key.GetValue("iconSize").ToString());
+          this.Size = new Size(Convert.ToInt32(key.GetValue("windowWidth")), this.Size.Height);
+        }
+
+        key.Close();
+      }
+
+      // Set starting position to setting stored in registry (if it exists).
+      this.StartPosition = FormStartPosition.Manual;
+      this.Location = this.GetStoredPosition();
+    }
+
+    //-------------------------------------------------------------------------
+
     private void GetShortcutSortingFromRegistry()
     {
       RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\TTToolbar");
@@ -171,7 +207,8 @@ namespace TTToolbar
     private PictureBox CreateNewIcon(string filename, string name)
     {
       PictureBox icon = new PictureBox();
-      icon.ImageLocation = filename;
+      Bitmap iconImage = new Bitmap(filename);
+      icon.Image = iconImage;
       icon.Size = new Size(50, 50);
       icon.SizeMode = PictureBoxSizeMode.CenterImage;
       icon.Name = name;
@@ -190,13 +227,52 @@ namespace TTToolbar
 
     private void PlaceShortcutsOnForm()
     {
+      // Clear shortcuts.
+      ClearShortcuts();
+
+      // Add row
+      this.shortcutIcons.RowCount = this.shortcutIcons.RowCount + 1;
+      this.shortcutIcons.RowStyles.Add(new RowStyle(SizeType.Absolute, this.currentIconSize));
+      this.shortcutIcons.Size = new Size(0, this.currentIconSize);
+
+      int maxNumberOfIconsPerRow = (this.Size.Width - 40) / this.currentIconSize;
+      int numberOfIconsAdded = 0;
+
       foreach (Shortcut shortcut in this.shortcuts)
       {
-        this.shortcutIcons.ColumnCount = shortcutIcons.ColumnCount + 1;
-        this.shortcutIcons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-        this.shortcutIcons.Size = new Size(this.shortcutIcons.Size.Width + 80, this.shortcutIcons.Size.Height);
+        if (numberOfIconsAdded != 0 && numberOfIconsAdded % maxNumberOfIconsPerRow == 0)
+        {
+          // Add row
+          this.shortcutIcons.RowCount = this.shortcutIcons.RowCount + 1;
+          this.shortcutIcons.RowStyles.Add(new RowStyle(SizeType.Absolute, this.currentIconSize));
+          this.shortcutIcons.Size = new Size(this.shortcutIcons.Size.Width, this.shortcutIcons.Size.Height + this.currentIconSize);
+        }
+        else if (numberOfIconsAdded < maxNumberOfIconsPerRow)
+        {
+          // Add column
+          this.shortcutIcons.ColumnCount = this.shortcutIcons.ColumnCount + 1;
+          this.shortcutIcons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, this.currentIconSize));
+          this.shortcutIcons.Size = new Size(this.shortcutIcons.Size.Width + this.currentIconSize, this.shortcutIcons.Size.Height);
+        }
+
+        numberOfIconsAdded++;
         this.shortcutIcons.Controls.Add(shortcut.icon);
       }
+
+      // Auto size form height.
+      this.Size = new Size(this.Size.Width, 50 + (this.currentIconSize * this.shortcutIcons.RowCount));
+    }
+
+    //-------------------------------------------------------------------------
+
+    private void ClearShortcuts()
+    {
+      this.shortcutIcons.Controls.Clear();
+      this.shortcutIcons.ColumnStyles.Clear();
+      this.shortcutIcons.ColumnCount = 0;
+      this.shortcutIcons.RowStyles.Clear();
+      this.shortcutIcons.RowCount = 0;
+      this.shortcutIcons.Size = new Size(0, 0);
     }
 
     //-------------------------------------------------------------------------
@@ -284,16 +360,72 @@ namespace TTToolbar
           InsertShortcutAtIndex(shortcutToInsert, indexToInsertAt);
           UpdateIndexing(indexOfShortcutToInsert, indexToInsertAt);
 
-          // Clear shortcuts.
-          this.shortcutIcons.Controls.Clear();
-          this.shortcutIcons.ColumnCount = 1;
-
           PlaceShortcutsOnForm();
         }
         else
         {
           RunShortcut(pictureBox);
         }
+      }
+    }
+
+    //-------------------------------------------------------------------------
+
+    void Form_Resize(object sender, EventArgs e)
+    {
+      if (WindowState == FormWindowState.Minimized)
+      {
+        this.Hide();
+      }
+    }
+
+    //-------------------------------------------------------------------------
+
+    void Form_ResizeEnd(object sender, EventArgs e)
+    {
+      this.currentIconSize = (this.Size.Width - 40) / this.shortcuts.Count;
+
+      this.currentIconSize = Math.Max(this.currentIconSize, this.minIconSize);
+      this.currentIconSize = Math.Min(this.currentIconSize, this.maxIconSize);
+
+      ScaleImageIcon(GetScaledPercentage());
+
+      PlaceShortcutsOnForm();
+    }
+
+    //-------------------------------------------------------------------------
+
+    private double GetScaledPercentage()
+    {
+      return (double)(currentIconSize - this.minIconSize) / (double)(this.maxIconSize - this.minIconSize);
+    }
+
+    //-------------------------------------------------------------------------
+
+    void ScaleImageIcon(double percentage)
+    {
+      // Don't scale below 50%.
+      percentage = Math.Max(0.5, percentage);
+
+      List<Bitmap> resizedImages = new List<Bitmap>();
+
+      foreach (Shortcut shortcut in this.shortcuts)
+      {
+        int newWidth = (int)Math.Round(shortcut.iconSourceWidth * percentage, 0);
+        int newHeight = (int)Math.Round(shortcut.iconSourceHeight * percentage, 0);
+
+        newWidth = Math.Min(newWidth, shortcut.iconSourceWidth);
+        newHeight = Math.Min(newHeight, shortcut.iconSourceHeight);
+
+        resizedImages.Add(new Bitmap(shortcut.originalImage, new Size(newWidth, newHeight)));
+      }
+
+      int index = 0;
+      foreach (Bitmap icon in resizedImages)
+      {
+        this.shortcuts[index].icon.Image = icon;
+
+        index++;
       }
     }
 
@@ -378,6 +510,9 @@ namespace TTToolbar
       {
         key.SetValue("indexing", this.shortcutIndexing);
       }
+
+      key.SetValue("iconSize", this.currentIconSize);
+      key.SetValue("windowWidth", this.Size.Width);
     }
 
     //-------------------------------------------------------------------------
