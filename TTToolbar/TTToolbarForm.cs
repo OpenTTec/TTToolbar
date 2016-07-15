@@ -476,7 +476,14 @@ namespace TTToolbar
         try
         {
           string directory = Environment.CurrentDirectory.ToString();
-          System.Diagnostics.Process.Start(directory + "\\" + shortcutClicked.exeRelFilename);
+          string exePath = directory + "\\" + shortcutClicked.exeRelFilename;
+          string exeDirectory = System.IO.Path.GetDirectoryName(exePath);
+
+          var startInfo = new System.Diagnostics.ProcessStartInfo();
+          startInfo.WorkingDirectory = exeDirectory;
+          startInfo.FileName = exePath;
+
+          System.Diagnostics.Process.Start(startInfo);
         }
         catch
         {
