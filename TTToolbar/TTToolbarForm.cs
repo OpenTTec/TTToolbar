@@ -20,6 +20,8 @@ namespace TTToolbar
     int minIconSize = 40;
     int currentIconSize = 60;
     Size defaultSize = new Size(460, 113);
+    string imageMissingFilename = "Images\\image-missing.png";
+    bool startOnStartupEnabled = true;
 
     //-------------------------------------------------------------------------
 
@@ -38,6 +40,10 @@ namespace TTToolbar
 
     public TTToolbarMainForm()
     {
+      // Set current directory.
+      string exePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+      System.IO.Directory.SetCurrentDirectory(exePath);
+
       InitializeComponent();
 
       PopulateListOfShortcutsFromConfigXml();
@@ -50,10 +56,10 @@ namespace TTToolbar
 
       this.TransparencyKey = this.BackColor;
 
-      // Write to registry so app launches on startup (WIP).
-      //string exeFullPath = Environment.CurrentDirectory.ToString() + "\\" + "TTToolbar.exe";
-      //RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
-      //key.SetValue("TTToolbar", exeFullPath);
+      // Write to registry so app launches on startup, if .
+      string exeFullPath = Environment.CurrentDirectory.ToString() + "\\" + "TTToolbar.exe";
+      RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+      key.SetValue("TTToolbar", exeFullPath);
     }
 
     //-------------------------------------------------------------------------
@@ -61,7 +67,15 @@ namespace TTToolbar
     private void PopulateListOfShortcutsFromConfigXml()
     {
       XmlDocument document = new XmlDocument();
-      document.Load("toolbarConfig.xml");
+
+      if (System.IO.File.Exists("toolbarConfig.xml"))
+      {
+        document.Load("toolbarConfig.xml");
+      }
+      else
+      {
+        MessageBox.Show("Failed to find config xml - " + Environment.CurrentDirectory.ToString(), "Error");
+      }
 
       XmlNodeList list = document.GetElementsByTagName("ToolbarShortcut");
       int index = 0;
@@ -85,8 +99,9 @@ namespace TTToolbar
 
       // Create new icon.
       PictureBox icon = CreateNewIcon(shortcut.GetAttribute("iconFilename"), shortcutInfo.name);
-      shortcutInfo.originalImage = icon.Image;
       shortcutInfo.icon = icon;
+
+      shortcutInfo.originalImage = icon.Image;
       shortcutInfo.iconSourceHeight = shortcutInfo.originalImage.Height;
       shortcutInfo.iconSourceWidth = shortcutInfo.originalImage.Width;
 
@@ -177,12 +192,19 @@ namespace TTToolbar
           this.Size = new Size(Convert.ToInt32(key.GetValue("windowWidth")), this.Size.Height);
         }
 
+        if (key.GetValue("startOnStartupEnabled") != null)
+        {
+          this.startOnStartupEnabled = Convert.ToBoolean(key.GetValue("startOnStartupEnabled"));
+        }
+
         key.Close();
       }
 
       // Set starting position to setting stored in registry (if it exists).
       this.StartPosition = FormStartPosition.Manual;
       this.Location = this.GetStoredPosition();
+
+      this.startOnStartupToolStripMenuItem.Checked = this.startOnStartupEnabled;
     }
 
     //-------------------------------------------------------------------------
@@ -207,8 +229,20 @@ namespace TTToolbar
     private PictureBox CreateNewIcon(string filename, string name)
     {
       PictureBox icon = new PictureBox();
-      Bitmap iconImage = new Bitmap(filename);
+
+      Bitmap iconImage = null;
+
+      if (System.IO.File.Exists(filename))
+      {
+        iconImage = new Bitmap(filename);
+      }
+      else
+      {
+        iconImage = new Bitmap(imageMissingFilename);
+      }
+
       icon.Image = iconImage;
+
       icon.Size = new Size(50, 50);
       icon.SizeMode = PictureBoxSizeMode.CenterImage;
       icon.Name = name;
@@ -281,6 +315,7 @@ namespace TTToolbar
     {
       Show();
       WindowState = FormWindowState.Normal;
+      this.TopMost = true;
     }
 
     //-------------------------------------------------------------------------
@@ -292,10 +327,35 @@ namespace TTToolbar
 
     //-------------------------------------------------------------------------
 
+    private void startOnStartupItem_Click(object sender, EventArgs e)
+    {
+      if (this.startOnStartupToolStripMenuItem.Checked)
+      {
+        this.startOnStartupToolStripMenuItem.Checked = false;
+        this.startOnStartupEnabled = false;
+      }
+      else
+      {
+        this.startOnStartupToolStripMenuItem.Checked = true;
+        this.startOnStartupEnabled = true;
+      }
+    }
+
+    //-------------------------------------------------------------------------
+
     private void trayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
     {
-      Show();
-      WindowState = FormWindowState.Normal;
+      if (WindowState == FormWindowState.Minimized)
+      {
+        Show();
+        WindowState = FormWindowState.Normal;
+        this.TopMost = true;
+      }
+      else
+      {
+        Hide();
+        WindowState = FormWindowState.Minimized;
+      }
     }
 
     //-------------------------------------------------------------------------
@@ -391,6 +451,14 @@ namespace TTToolbar
       ScaleImageIcon(GetScaledPercentage());
 
       PlaceShortcutsOnForm();
+    }
+
+    //-------------------------------------------------------------------------
+
+    private void TTToolbarMainForm_DoubleClick(object sender, EventArgs e)
+    {
+      Hide();
+      WindowState = FormWindowState.Minimized;
     }
 
     //-------------------------------------------------------------------------
@@ -520,6 +588,20 @@ namespace TTToolbar
 
       key.SetValue("iconSize", this.currentIconSize);
       key.SetValue("windowWidth", this.Size.Width);
+
+      key.SetValue("startOnStartupEnabled", this.startOnStartupEnabled);
+
+      key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+
+      if (this.startOnStartupEnabled)
+      {
+        string exeFullPath = Environment.CurrentDirectory.ToString() + "\\" + "TTToolbar.exe";
+        key.SetValue("TTToolbar", exeFullPath);
+      }
+      else
+      {
+        key.SetValue("TTToolbar", "");
+      }
     }
 
     //-------------------------------------------------------------------------
