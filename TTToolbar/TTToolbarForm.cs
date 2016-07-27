@@ -30,6 +30,7 @@ namespace TTToolbar
       public string exeRelFilename;
       public string name;
       public string link;
+      public string bugProjectLink;
       public Image originalImage;
       public PictureBox icon;
       public int iconSourceWidth;
@@ -120,6 +121,13 @@ namespace TTToolbar
       else
       {
         MessageBox.Show("Must specify exe or link.", "Error");
+      }
+
+      // Get bug project link, if it exists.
+      shortcutInfo.bugProjectLink = "N/A";
+      if(shortcut.HasAttribute("bugProjectLink"))
+      {
+        shortcutInfo.bugProjectLink = shortcut.GetAttribute("bugProjectLink");
       }
 
       // Only add shortcut to list, if it isn't a duplicate - ignore duplicates.
@@ -251,6 +259,7 @@ namespace TTToolbar
       icon.MouseDown += new MouseEventHandler(this.icon_MouseDown);
       icon.DragEnter += new DragEventHandler(this.icon_DragEnter);
       icon.DragDrop += new DragEventHandler(this.icon_DragDrop);
+      icon.Click += new System.EventHandler(this.icon_Click);
       icon.AllowDrop = true;
       icon.Anchor = AnchorStyles.Top;
 
@@ -431,6 +440,30 @@ namespace TTToolbar
 
     //-------------------------------------------------------------------------
 
+    void icon_Click(object sender, EventArgs e)
+    {
+      MouseEventArgs me = (MouseEventArgs)e;
+      PictureBox pictureBox = (PictureBox)sender;
+
+      if (me.Button == System.Windows.Forms.MouseButtons.Right)
+      {
+        Shortcut shortcut = GetShortcutFromName(pictureBox.Name);
+
+        // If link specified, run it.
+        if (!shortcut.bugProjectLink.Equals("N/A"))
+        {
+          System.Diagnostics.Process.Start(shortcut.bugProjectLink);
+        }
+        // If nothing has been specified to run, show error message.
+        else
+        {
+          MessageBox.Show("No bug project associated with this shortcut icon.", "Error");
+        }
+      }
+    }
+
+    //-------------------------------------------------------------------------
+
     void Form_Resize(object sender, EventArgs e)
     {
       if (WindowState == FormWindowState.Minimized)
@@ -558,6 +591,7 @@ namespace TTToolbar
           MessageBox.Show("Specified exe does not exist.", "Error");
         }
       }
+
       // If link specified, run it.
       else if (!shortcutClicked.link.Equals("N/A"))
       {
