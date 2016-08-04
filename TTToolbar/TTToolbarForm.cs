@@ -22,6 +22,7 @@ namespace TTToolbar
     Size defaultSize = new Size(460, 113);
     string imageMissingFilename = "Images\\image-missing.png";
     bool startOnStartupEnabled = true;
+    System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
 
     //-------------------------------------------------------------------------
 
@@ -55,12 +56,14 @@ namespace TTToolbar
       ScaleImageIcon(GetScaledPercentage());
       PlaceShortcutsOnForm();
 
-      this.TransparencyKey = this.BackColor;
-
       // Write to registry so app launches on startup, if .
       string exeFullPath = Environment.CurrentDirectory.ToString() + "\\" + "TTToolbar.exe";
       RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
       key.SetValue("TTToolbar", exeFullPath);
+
+      this.timer.Interval = 100;
+      this.timer.Tick += this.Tick;
+      this.timer.Start();
     }
 
     //-------------------------------------------------------------------------
@@ -709,6 +712,23 @@ namespace TTToolbar
       }
 
       return false;
+    }
+
+    //-------------------------------------------------------------------------
+
+    private void Tick(Object source, EventArgs e)
+    {
+      bool mouseHoveringOnForm = false;
+      double mouseXPosInFormSpace = Form.MousePosition.X - Location.X;
+      double mouseYPosInFormSpace = Form.MousePosition.Y - Location.Y;
+
+      if (mouseXPosInFormSpace > 0 && mouseXPosInFormSpace < this.Size.Width &&
+          mouseYPosInFormSpace > 0 && mouseYPosInFormSpace < this.Size.Height)
+      {
+        mouseHoveringOnForm = true;
+      }
+
+      Opacity = mouseHoveringOnForm ? 0.99 : 0.5;
     }
 
     //-------------------------------------------------------------------------

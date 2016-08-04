@@ -101,12 +101,13 @@
       this.MaximizeBox = false;
       this.MinimizeBox = false;
       this.Name = "TTToolbarMainForm";
+      this.Opacity = 0.5D;
       this.ShowInTaskbar = false;
       this.Text = "TT Toolbar";
       this.TopMost = true;
+      this.ResizeEnd += new System.EventHandler(this.Form_ResizeEnd);
       this.DoubleClick += new System.EventHandler(this.TTToolbarMainForm_DoubleClick);
       this.Resize += new System.EventHandler(this.Form_Resize);
-      this.ResizeEnd += new System.EventHandler(this.Form_ResizeEnd);
       this.trayMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
